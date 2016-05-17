@@ -1,0 +1,295 @@
+  <html>
+   <head>
+    <link href="../css/c3.css" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Simple markers</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 90%;
+      }
+    </style>
+  </head>
+  <body bgcolor="#E5E5E5">
+    <div style="width: 100%;text-align: center;"> <h1>Advanced Big Data Analytics - Final Project </h1></div>
+    <div style="width: 100%;text-align: center;"> <h2>Analysis and Predictions on NYC Motor Vehicle Collision Data </h2></div>
+    <div style="width: 100%;text-align: center;"> <h2>Anshuman Singh (as4916) Diksha Vanvari (dhv2108)</h2></div><br><br>
+
+    <div style="width: 100%;text-align: center;"> <h2>Heat Map of all accidents across all five boroughs</h2></div>
+    <div id="map"></div>
+    <div style="width: 100%;text-align: center;"> <h2>Distribution of accidents across all boroughs over time of the day </h2></div>
+    <div style="width: 100%;text-align: center;"> <h4> To see the causes of accidents in a borough, click on its bar. </h4></div>
+    <div id="boroughtimes"></div>
+    <div id="headingforcontrib" style="width: 100%;text-align: center;visibility: hidden;"> <h2> Causes of accidents </h2></div>
+    <div id="containerforboroughfactors" style="visibility: hidden;"> 
+    <div id="boroughfactors"></div>
+    </div>
+    <div style="width: 100%;text-align: center;"> <h2>Frequency of fatal accidents over time of the day </h2></div>
+    <div id="deaths"></div>
+    <div style="width: 100%;text-align: center;"> <h2>Causes of accidents across all 5 boroughs</h2></div>
+    <div style="width: 100%;text-align: center;"> <h4>To see the distribution of a cause across boroughs, click on its sector</h4></div>
+    <div id="factors"></div>
+    <div id="boroughsinafactorheading" style="width: 100%;text-align: center;visibility: hidden;"><h2>Distribution across boroughs<h2></div>
+    <div id="boroughsinafactor" style="visibility: hidden;"></div>
+    <div id="boroughsinafactorheading" style="width: 100%;text-align: center;"><h2>Relative distribution of accidents by vehicle type<h2></div>
+    <div style="width: 100%;text-align: center;"> <h4>To see the distribution of a vehicle type across boroughs, click on its sector</h4></div>
+    <div id="vehicles"></div>
+    <div id="boroughsinavehicleheading" style="width: 100%;text-align: center;visibility: hidden;"><h2>Distribution across boroughs<h2></div>
+    <div id="boroughsinavehicle" style="visibility:hidden;"></div>
+    <br>
+    <div id="boroughsinavehicleheading" style="width: 100%;text-align: center;"><h2>Weather Conditions on the days when most number of accidents occurred in the last three years<h2></div>
+    <div id="dangdates"></div>
+    <div id="boroughsinavehicleheading" style="width: 100%;text-align: center;"><h2>Gaussian Mixture Model on Accident Data - 4 Clusters<h2>
+      <img src="gmm.png" style="width: 100%;"></div>
+   
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="../js/c3.js"></script>
+  
+    <script>
+      function initMap() {
+        var myLatLng = {lat: 40.7128, lng: -74.0059};
+        var markerLatLng = {lat: 40.6936625, lng: -73.8521639};
+        var markerLatLng1 = {lat: 40.7942333, lng: -73.9469462};
+        
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 12,
+          center: myLatLng,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+        var trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(map);
+        var bikeLayer = new google.maps.BicyclingLayer();
+        bikeLayer.setMap(map);
+        var getFileBlob = function (url, cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url);
+        xhr.responseType = "blob";
+        xhr.addEventListener('load', function() {
+            cb(xhr.response);
+        });
+        xhr.send();
+        };
+
+        var blobToFile = function (blob, name) {
+                blob.lastModifiedDate = new Date();
+                blob.name = name;
+                return blob;
+        };
+
+        var getFileObject = function(filePathOrUrl, cb) {
+               getFileBlob(filePathOrUrl, function (blob) {
+                  cb(blobToFile(blob,  filePathOrUrl));
+               });
+        };
+
+        getFileObject('locationaccidents.csv', function (fileObject) {
+              var reader = new FileReader();
+              reader.readAsText(fileObject);
+              reader.onload = function(event){
+              processCSV(reader.result,map);
+            }
+        }); 
+
+        function processCSV(csv,map){
+           var lines = csv.split("\n");
+          var heatmapData = [];
+            
+            var result = [];
+            var headers = lines[0].split(",");
+
+            for (var i = 1; i < lines.length - 1; i++) {
+              var obj = {};
+              var currentline = lines[i].split(",");
+
+              obj["lat"] = parseFloat(currentline[0]);
+              obj["lng"] = parseFloat(currentline[1]);
+              // console.log(obj["lat"]);
+              // console.log(obj["lng"]);
+
+              if(obj["lat"] != 'NaN' && obj["lng"] != 'NaN'){
+                heatmapData.push(new google.maps.LatLng(obj["lat"],obj["lng"]));
+              }
+              // var marker = new google.maps.Marker({
+              // position: obj,
+              // map: map,
+              // title: 'Hello World!'
+              // });
+           
+             }
+            var heatmap = new google.maps.visualization.HeatmapLayer({
+            data: heatmapData,
+            dissipating: true
+            });
+            heatmap.setMap(map);
+
+        } 
+      }
+
+
+      var chart1 = c3.generate({
+        bindto: '#boroughtimes',
+        data: {
+        url: 'boroughtimes.csv',
+        type : 'bar',
+        onclick: function (d, i) { 
+            console.log("onclick", d, i);
+             var filename = d.name.split('/')[0];
+             console.log(filename); 
+             var name = "factorsInABorough/" + filename + "contribfactor.csv";
+             console.log(name);
+             document.getElementById("containerforboroughfactors").style.visibility= 'hidden';
+             document.getElementById("containerforboroughfactors").style.visibility= 'visible';
+             document.getElementById("headingforcontrib").style.visibility= 'visible';
+              var chart15 = c3.generate({
+              bindto: '#containerforboroughfactors',
+              data: {
+              url: name,
+              type : 'donut',
+              },
+              donut: {
+                    title: d.name
+              },
+                 size : {
+                height : 500,
+              }
+              });
+          }
+        },
+        size: {
+        height: 500,
+        }
+      });
+      var chart2 = c3.generate({
+        bindto : '#factors',
+        data: {
+          url: 'factor.csv',
+          type : 'pie',
+          onclick: function (d, i) { 
+            console.log("onclick", d, i);
+             var filename = d.name.split('/')[0];
+             console.log(filename); 
+             var name = "boroughsInAFactor/fatal" + filename + ".csv";
+             document.getElementById("boroughsinafactor").style.visibility= 'hidden';
+             document.getElementById("boroughsinafactor").style.visibility= 'visible';
+             document.getElementById("boroughsinafactorheading").style.visibility= 'visible';
+              var chart15 = c3.generate({
+              bindto: '#boroughsinafactor',
+              data: {
+              url: name,
+              type : 'donut',
+              },
+              donut: {
+                    title: d.name
+              },
+              size : {
+                height : 400,
+              }
+              });
+          }
+        },
+        size: {
+          height: 600,
+        }
+      });
+
+      var chart3 = c3.generate({
+        bindto: '#deaths',
+        data: {
+        url: 'deathsbytime.csv',
+        type : 'bar'
+        },
+        size: {
+        height: 500,
+        },
+        grid: {
+          x: {
+              show: true
+          },
+          y: {
+              show: true
+          }
+        }
+      });
+
+      var chart4 = c3.generate({
+        bindto: '#vehicles',
+        data: {
+        url: 'vehicle.csv',
+        type : 'pie',
+        onclick: function (d, i) { 
+            console.log("onclick", d, i);
+             var filename = d.name.split('/')[0];
+             console.log(filename); 
+             var name = "boroughsInAVehicleType/fatal" + filename + ".csv";
+             console.log(name);
+             document.getElementById("boroughsinavehicle").style.visibility= 'hidden';
+             document.getElementById("boroughsinavehicle").style.visibility= 'visible';
+             document.getElementById("boroughsinavehicleheading").style.visibility= 'visible';
+              var chart15 = c3.generate({
+              bindto: '#boroughsinavehicle',
+              data: {
+              url: name,
+              type : 'donut',
+              },
+              donut: {
+                    title: d.name
+              },
+                 size : {
+                height : 400,
+              }
+              });
+          }
+        },
+        size: {
+        height: 500,
+        }
+      });
+
+      var chart5 = c3.generate({
+        bindto: '#dangdates',
+        data: {
+        columns: [
+                  ['Accidents', 851, 867, 1161, 960, 960, 829, 936, 812, 819, 805]
+                ]
+        },
+        axis: {
+                x: {
+                    type: 'category',
+                    categories: ['2013-03-08', '2013-11-26',  '2014-01-21', '2014-02-03', '2015-01-08','2015-03-05','2015-03-06', '2015-05-29', '2015-11-20' ,'2015-12-23']
+                }
+        },
+        tooltip: {
+              contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                      if(d[0].value == 851)
+                      {
+                        return "<font color='red'>" + "March 2013 nor'easter : 3 feet snow <br> Temp: -10 C" + "</font>" +
+                          "<br>";
+                      }
+                      else if(d[0].value == 867)
+                      {
+                        return "<font color='red'>" + "Snow Storm: 0.3 feet snow, 55 mph winds <br> Temp: -8 C  " + "</font>" +
+                          "<br>";
+                      }
+                      else if(d[0].value == 1161)
+                      {
+                        return "<font color='red'>" + "Snow Storm: 1.5 feet snow,  Strong winds <br> Temp: -7 C  " + "</font>" +
+                          "<br>";
+                      }
+                }
+        }
+      });
+
+  
+        
+    </script>
+     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-_g0vdFiEvZjUhsamUbx180tG4-h78S4&libraries=visualization&callback=initMap"></script>
+   
+  </body>
+</html>
