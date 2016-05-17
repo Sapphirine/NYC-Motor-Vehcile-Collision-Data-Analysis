@@ -59,7 +59,7 @@ You are submitting this job using a script-runner provided by AWS. You are passi
 
 Click on Add and refresh the page to see if the step was successfully added. The cluster state changes from Waiting to Running if the job is accepted and is running successfully.
 
-##Visualization
+##Visualizations
 
 Once the CSVs are created on S3, you can download them locally to your machine. Paste them in the same directory as Visualizations/htdocs/samples. These files serve as input to the visualization which is done using C3.js. 
 
