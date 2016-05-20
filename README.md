@@ -16,7 +16,7 @@ Owner - NYC Open Data
 
 * All the spark SQL queries can be found in loader.py. The output of the queries is stored in CSV files, one for each query.
 * The code for GMM clustering can be found in gmm.py. The output of this algorithm is a plot showing the clusters generated. 
-* The Javascript code can be found here: c3-0.4.11-/htdocs/samples/chart.html
+* The Javascript code can be found here: Visualizations/htdocs/samples/chart.html
 
 ##How to run:
 
